@@ -140,7 +140,3 @@ Edit the templates in `agents/` to change how a role works everywhere. Edit a ge
 ```
 
 This removes the skills. Agents already generated inside your projects stay where they are.
-
-## Credits
-
-The repository layout takes inspiration from [meszaroszack/agent-kit](https://github.com/meszaroszack/agent-kit).
