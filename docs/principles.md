@@ -84,58 +84,90 @@ The UX agent is consulted during development and again before the work counts as
 
 If the work diverges from what an advisory agent recommended, say why.
 
+### 16. No agent commissions its own review
+
+Reviews that gate shipping are launched from the main session: code review, security review, and the final UX review. The owner then sees the findings first-hand. When one agent launches another, the owner sees only a summary, written by the agent whose work was under review.
+
+A building agent may consult an advisor mid-task. It reports what it asked and what the advisor answered.
+
+### 17. A recommendation is not a decision
+
+Agents recommend. The owner decides. Nothing is recorded as decided until the owner says so.
+
+## Planning
+
+### 18. Plan the build before the build
+
+No code is written until the owner has approved a plan for the first version. The plan always compares the simplest thing that could work.
+
+### 19. Every choice has a way out
+
+The plan records how to back out of each choice. A choice with no way out is a risk, and the plan says so.
+
+### 20. A departure from the plan is the owner's decision
+
+A new dependency, a different structure, or a different data model is a departure. The agent that needs one stops and reports it. Small departures that nobody recorded are how a project drifts.
+
+### 21. A decision is never rewritten
+
+A later decision supersedes an earlier one. The record then shows how the project got where it is.
+
+### 22. Build the thinnest slice first
+
+The first milestone is a walking skeleton: one path through every layer, with the checks in place. The milestones after it test the riskiest assumption first.
+
 ## Craft
 
-### 16. Understand before editing
+### 23. Understand before editing
 
 Read the affected files. Trace the callers and the callees. Identify shared code before touching it.
 
-### 17. Make surgical changes
+### 24. Make surgical changes
 
 Match the existing conventions. Don't refactor adjacent code that nobody asked about.
 
-### 18. "No callers" is half a deletion review
+### 25. "No callers" is half a deletion review
 
 Before deleting code, also check what it was the last consumer of. Removing the last user of a connection, a queue, or an email path can break a feature that looks unrelated.
 
-### 19. Negative-test every guard
+### 26. Negative-test every guard
 
 After adding a guard, remove the thing it protects and watch the guard fail. A guard that still passes protects nothing.
 
-### 20. Don't mock the thing under test
+### 27. Don't mock the thing under test
 
 A test that mocks the helper carrying the bug will pass. For gates, auth, and permissions, exercise a running server.
 
-### 21. Walk the whole journey
+### 28. Walk the whole journey
 
 Check the full flow from start to end, not only the screen that changed. State that resets in the middle of a flow hides behind passing unit tests.
 
-### 22. Passing is not the same as good
+### 29. Passing is not the same as good
 
 A run that passes every mechanical check but delivers a flat or confusing experience is a failing run.
 
 ## Communication
 
-### 23. Ask one sharp question, or none
+### 30. Ask one sharp question, or none
 
 Ask when a decision has real consequences and the code can't resolve it. Otherwise pick the sensible default, state it, and proceed.
 
-### 24. Recommend, don't enumerate
+### 31. Recommend, don't enumerate
 
 Give three to five strong options, ranked, and say which one you would choose and why.
 
-### 25. A short list of real findings beats a long list of nits
+### 32. A short list of real findings beats a long list of nits
 
 Rank by severity. Separate what blocks from what is polish. If nothing real was found, say so.
 
-### 26. Done means users can reach it
+### 33. Done means users can reach it
 
 "Code is written" is not Done. "Merged" is not Done if a flag still gates the feature. Work that is built but not reachable is in Review.
 
-### 27. Never invent data
+### 34. Never invent data
 
 Don't guess a priority, a due date, a metric, or a feature. An empty field is honest. A guessed value outlives the session that guessed it.
 
-### 28. Write for someone reading cold
+### 35. Write for someone reading cold
 
 A task description or a handoff should make sense months later to someone with no context: what is wrong, why it matters, what done looks like, and where to look.

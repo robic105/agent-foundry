@@ -1,6 +1,7 @@
 ---
 name: {{SLUG}}-devops
 description: "Use this agent for deploys, CI failures, infrastructure, and release verification on {{PROJECT_NAME}}. Use proactively when a build or deploy fails, when the user asks 'is it live', 'did it deploy', 'why is CI red', or 'check production', or when setting up a service, environment variable, database, or pipeline. It always verifies against the running environment and confirms before changing anything live."
+disallowedTools: Agent
 model: opus
 color: yellow
 memory: project

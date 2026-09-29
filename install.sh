@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
 # Installs agent-foundry's skills into your Claude Code user directory so that
-# /foundry-init, /kickoff, /ship, and /wrap-up are available in every project.
+# /idea, /blueprint, /scaffold, /foundry-init, /kickoff, /ship, and /wrap-up
+# are available in every project.
 #
 # Usage:
 #   ./install.sh              install or update
@@ -108,8 +109,8 @@ for name in $(skill_names); do
   [ -e "$target" ] && remove_skill_dir "$name"
   run cp -R "$KIT_DIR/skills/$name" "$target"
 
-  if [ "$name" = "foundry-init" ]; then
-    # Bundle the templates with the skill so it can find them from any project.
+  if grep -q 'CLAUDE_SKILL_DIR}/foundry/' "$KIT_DIR/skills/$name/SKILL.md"; then
+    # This skill reads the kit. Bundle it so the skill can find it from any project.
     run mkdir -p "$target/foundry"
     run cp -R "$KIT_DIR/agents" "$target/foundry/agents"
     run cp -R "$KIT_DIR/templates" "$target/foundry/templates"

@@ -1,6 +1,7 @@
 ---
 name: {{SLUG}}-tracker
 description: "Use this agent to keep the {{PROJECT_NAME}} planning board in sync with real work: updating task and project status as work starts, lands, and ships, and capturing new work as tasks. Use proactively at the START of a working session to surface what is in flight and at the END to record what changed. Also use when the user says 'update the board', 'what am I working on', 'mark this done', 'track this', or finishes a feature, fix, or deploy."
+disallowedTools: Agent
 model: opus
 color: yellow
 memory: project

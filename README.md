@@ -2,12 +2,12 @@
 
 An operating system for building apps with a team of AI agents in [Claude Code](https://claude.com/claude-code).
 
-Install it once. In any new project, type `/foundry-init` and get a team of specialist agents that already know the project: its stack, its workflow, its users, and the code that must not break.
+Install it once. Then, in any project, get a team of specialist agents that already know the project: its stack, its workflow, its users, and the code that must not break. It works from the first idea, before there is any code, and it plans the build before the build starts.
 
 ## What you get
 
 - **Ten agent roles plus a specialist template.** Developer, code review, security, UX, product manager, architect, QA, DevOps, project tracker, and social. Each is a role template that gets tailored to the project.
-- **Four skills.** `/foundry-init` sets a project up. `/kickoff`, `/ship`, and `/wrap-up` run a working session.
+- **Seven skills.** `/idea` develops an idea. `/blueprint` plans the build. `/scaffold` builds the first milestone. `/foundry-init` sets up the team. `/kickoff`, `/ship`, and `/wrap-up` run a working session.
 - **Project scaffolding.** A `CLAUDE.md` with routing rules, a baseline permissions file, a pull request template, issue templates, and a CI workflow.
 - **Validators.** One checks a generated project. One checks this kit and blocks private details from being published.
 
@@ -21,17 +21,20 @@ cd agent-foundry
 ./install.sh
 ```
 
-This copies the four skills into `~/.claude/skills/`. It touches nothing else.
+This copies the seven skills into `~/.claude/skills/`. It touches nothing else.
 
-### 2. Set up a project, once per project
+### 2. Pick your starting point
 
-Open the project in Claude Code and type:
+| You have | Type | What happens |
+|---|---|---|
+| An idea and an empty folder | `/idea` | An interview, a written brief, and a first round of product, UX, and architecture perspectives |
+| A brief, and you want to start building | `/blueprint` | A reviewed plan for the first version: scope, stack, structure, risks, and milestones. You approve it. |
+| An approved blueprint | `/scaffold` | The first milestone, built to the plan, verified, and reviewed against it |
+| A brief or a blueprint, and you want agents that remember | `/foundry-init` | A planning team that knows the brief |
+| A project with code | `/foundry-init` | A full team, filled in from the code |
+| A project with agents you wrote by hand | `/foundry-init` | Your agents are adopted in place. They keep their names, memory, and project content. |
 
-```
-/foundry-init
-```
-
-It surveys the repo, asks a few questions, and writes the agents and project files. Review what it generated, then start a new session so the agents load.
+After `/foundry-init`, review what it generated, then start a new session so the agents load.
 
 ### 3. Work
 
@@ -46,6 +49,40 @@ It surveys the repo, asks a few questions, and writes the agents and project fil
 | `/wrap-up` | Records what changed, captures follow-ups, lists loose ends |
 
 Full walkthrough: [docs/getting-started.md](docs/getting-started.md)
+
+## From idea to build
+
+```
+/idea  →  /blueprint  →  /scaffold  →  /foundry-init  →  /kickoff ... /ship
+talk      plan the       build the      generate the      work on the
+it out    build          first slice    full team         next milestone
+```
+
+A project moves through three stages.
+
+| Stage | The repo has | You work with | The source of truth |
+|---|---|---|---|
+| **idea** | A brief | `/idea` | `docs/idea/BRIEF.md` |
+| **plan** | An approved blueprint, no code | `/blueprint`, `/scaffold` | `docs/plan/BLUEPRINT.md` |
+| **build** | Code | The full team | The code, the running system, and the blueprint |
+
+**`/idea` needs nothing decided.** You can answer "I don't know" to any question, and it never asks about technology.
+
+**`/blueprint` is the code planning phase.** No code is written during it. It exists so that a project does not start down a path it can't sustain.
+
+| Step | Who | Produces |
+|---|---|---|
+| Scope | pm | What the first version includes, and what it leaves out |
+| Draft | architect | Options compared, a stack, a structure, risks, milestones |
+| Challenge | dev, pm, and ux or security when relevant | What will be painful, unsafe, or unnecessary |
+| Revise | architect | An answer to every concern |
+| Approve | You | The decisions, recorded with their reasons |
+
+Every choice in the blueprint records how to back out of it. The plan also answers a fixed set of sustainability questions, such as whether you can maintain it alone and what it costs at ten times the use.
+
+**`/scaffold` builds milestone 0 and nothing more:** the thinnest slice that runs end to end, with tests and checks in place.
+
+**The plan keeps guarding the build afterwards.** A departure from the blueprint, such as a new dependency or a different structure, is your decision. The dev agent stops and reports it, the code-review agent flags it, and `/ship` has the architect check every change against the plan.
 
 ## How it works
 
@@ -63,25 +100,25 @@ So each role template has two kinds of content:
 <!-- /foundry:project -->
 ```
 
-`/foundry-init` reads the repo, fills every project block with real files and commands, and writes the result to `.claude/agents/<project>-<role>.md`. The markers stay in the file, so a later refresh can update the role craft and keep the project context.
+`/foundry-init` reads the repo, fills every project block with real files and commands, and writes the result to `.claude/agents/<project>-<role>.md`. The markers stay in the file, so later runs can update the role craft and keep the project context.
 
 ## The agents
 
-| Role | What it does | Edits code |
-|---|---|---|
-| `dev` | Implements features and fixes, ships through the project's workflow | Yes |
-| `code-review` | Reviews a diff for correctness bugs and cleanup | No |
-| `security` | Defensive security review, static analysis only | No |
-| `ux` | Champions the user: flows, copy, states, accessibility, brand | No |
-| `pm` | Scopes features, prioritizes, writes specs | No |
-| `architect` | Plans how to build something, records decisions | No |
-| `qa` | Writes and runs tests, judges whether the result is good | Tests only |
-| `devops` | Deploys, diagnoses CI, verifies the running environment | Yes, with confirmation |
-| `tracker` | Keeps the planning board in line with reality | Board only |
-| `social` | Drafts and critiques social and marketing content | No |
-| `specialist` | A template for an expert in your project's own domain | Configurable |
+| Role | What it does | Edits code | Can launch agents |
+|---|---|---|---|
+| `dev` | Implements features and fixes, ships through the project's workflow | Yes | Yes, to consult an advisor |
+| `code-review` | Reviews a diff for correctness bugs and cleanup | No | No |
+| `security` | Defensive security review, static analysis only | No | No |
+| `ux` | Champions the user: flows, copy, states, accessibility, brand | No | No |
+| `pm` | Scopes features, prioritizes, writes specs | No | No |
+| `architect` | Plans how to build something, records decisions | No | No |
+| `qa` | Writes and runs tests, judges whether the result is good | Tests only | No |
+| `devops` | Deploys, diagnoses CI, verifies the running environment | Yes, with confirmation | No |
+| `tracker` | Keeps the planning board in line with reality | Board only | No |
+| `social` | Drafts and critiques social and marketing content | No | No |
+| `specialist` | A template for an expert in your project's own domain | Configurable | No |
 
-Details: [docs/agents.md](docs/agents.md)
+Details: [docs/agent-catalog.md](docs/agent-catalog.md)
 
 ## Principles
 
@@ -92,7 +129,9 @@ The agents share a set of working rules. The main ones:
 3. **Reality beats the record.** When the board or a document disagrees with the running system, the record is what changes.
 4. **State the blast radius** before touching anything that every user depends on.
 5. **Advisory agents don't edit.** Reviewers recommend. The developer implements.
-6. **Never merge, never push unasked.** The owner approves what ships.
+6. **No agent commissions its own review.** Reviews that gate shipping are launched from the main session.
+7. **Plan the build before the build.** A departure from the plan is the owner's decision.
+8. **Never merge, never push unasked.** The owner approves what ships.
 
 Full list: [docs/principles.md](docs/principles.md)
 
@@ -104,7 +143,10 @@ agent-foundry/
 ├── VERSION
 ├── agents/                    role templates, one per role
 ├── skills/
-│   ├── foundry-init/          generates a project's agents and files
+│   ├── idea/                  interviews the owner and writes the brief
+│   ├── blueprint/             plans the build and records the decisions
+│   ├── scaffold/              builds the first milestone to the plan
+│   ├── foundry-init/          generates, adopts, and updates a project's agents
 │   ├── kickoff/               starts a session
 │   ├── ship/                  review gates, push, verify, pull request
 │   └── wrap-up/               ends a session
@@ -112,6 +154,8 @@ agent-foundry/
 │   ├── CLAUDE.md
 │   ├── settings.json          baseline permissions
 │   ├── CURRENT-STATE.md       session handoff, for projects without a tracker
+│   ├── idea/BRIEF.md          the idea brief
+│   ├── plan/                  the blueprint and the decision record
 │   └── github/                pull request, issue, and CI templates
 ├── scripts/
 │   ├── check-project.sh       validates a generated project

@@ -1,6 +1,6 @@
 # Agent catalog
 
-Every role lives in `agents/<role>.md` as a template. `/foundry-init` generates `.claude/agents/<slug>-<role>.md` from it.
+Every role lives in `agents/<role>.md` as a template. `/foundry-init` generates `.claude/agents/<slug>-<role>.md` from it. An agent you wrote by hand and then adopted keeps its own name.
 
 ## Summary
 
@@ -20,6 +20,8 @@ Every role lives in `agents/<role>.md` as a template. `/foundry-init` generates 
 
 All agents use `model: opus` and `memory: project`.
 
+**On launching other agents:** only `dev` can, and only to consult an advisor mid-task. The read-only agents have no `Agent` tool in their tool lists. The `qa`, `devops`, and `tracker` agents set `disallowedTools: Agent`. Reviews that gate shipping are launched from the main session. See [How agents work together](getting-started.md#how-agents-work-together).
+
 **On tools:** an agent with a restricted tool list can still read and write its own memory. Claude Code enables that when `memory` is set. Agents with no `tools` line inherit every tool available, including MCP tools, which the tracker needs to reach a board.
 
 **On read-only agents:** the tool list is the enforcement. An agent with no Edit or Write tool cannot change project files. Agents that have Bash are also told to use it for inspection only. That part is an instruction and not a technical limit.
@@ -31,7 +33,9 @@ All agents use `model: opus` and `memory: project`.
 Implements features, fixes, and refactors, and ships through the project's workflow.
 
 - States a blast-radius analysis before touching a protected surface
-- Consults the UX agent on anything user-facing
+- Consults the UX agent mid-build on anything user-facing. The final UX review comes from the main session.
+- Never commissions its own review
+- Builds to the blueprint. Stops and reports when the plan can't be followed.
 - Verifies by observation: typecheck, build, run, screenshot, curl
 - Never merges, and never pushes unless asked
 
@@ -42,7 +46,8 @@ Implements features, fixes, and refactors, and ships through the project's workf
 Reviews a diff for correctness bugs and cleanup. It optimizes for recall and refuses to pad the list.
 
 - Fetches first and reviews against the remote base, because local branches go stale
-- Runs four angles: line-by-line correctness, removed behavior, cross-file impact, cleanup
+- Runs five angles: line-by-line correctness, removed behavior, cross-file impact, conformance to the blueprint, cleanup
+- Flags a dependency, structure, or data model that no recorded decision covers
 - Reports `file:line`, the bug in one sentence, and a concrete failure scenario
 
 **Say:** "review this", "check this diff", "anything wrong before I merge"
@@ -83,6 +88,8 @@ Turns fuzzy ideas into buildable scope and pushes back on what isn't worth build
 
 Decides how something gets built. The pm agent decides whether.
 
+- Owns the blueprint, the plan the owner approved for how the project gets built
+- Runs a sustainability check on any plan that sets direction
 - Reads the code before designing
 - Compares options only when they differ in substance, and recommends one
 - Plans in steps small enough for one pull request each, with acceptance criteria
@@ -158,6 +165,7 @@ Specialists work best when invoked with a focus question.
 
 | Project | Suggested agents |
 |---|---|
+| An idea with no code yet | pm, architect, and ux if people will use an interface |
 | A web app with users | The core five, plus devops and tracker |
 | A prototype | dev, code-review, pm |
 | A library or a CLI tool | dev, code-review, qa, architect |

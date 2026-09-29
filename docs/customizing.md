@@ -61,6 +61,8 @@ Simple values, replaced everywhere they appear.
 
 Content inside a block belongs to the project. A refresh carries it over unchanged. Content outside a block is role craft, and a refresh replaces it with the new template.
 
+An adopted agent can have one extra block with the key `notes`. It holds project content from the hand-written agent that fit no block in the template. A refresh keeps it.
+
 Rules for keys:
 
 - Lowercase letters and hyphens
@@ -89,11 +91,11 @@ If you often make the same edit outside a block, the template probably needs a n
 ## Adding a new role
 
 1. Copy the closest template to `agents/<new-role>.md`.
-2. Set the frontmatter: `name: {{SLUG}}-<new-role>`, a one-line quoted `description` with trigger phrases, `tools`, `model`, `color`, and `memory: project`.
+2. Set the frontmatter: `name: {{SLUG}}-<new-role>`, a one-line quoted `description` with trigger phrases, `tools`, `model`, `color`, and `memory: project`. If the role has no `tools` line, add `disallowedTools: Agent`.
 3. Set the marker line: `<!-- agent-foundry: role=<new-role> -->`.
 4. Write the role craft. Put everything that depends on the project inside project blocks with fill instructions.
 5. End with a `## What to remember` section.
-6. Add the role to the agent list in `skills/foundry-init/SKILL.md` and to `docs/agents.md`.
+6. Add the role to the agent list in `skills/foundry-init/SKILL.md` and to `docs/agent-catalog.md`.
 7. Run `scripts/validate.sh`.
 
 ### Writing a good description
@@ -113,7 +115,15 @@ Give an agent the fewest tools its job needs.
 | Reviews code or configuration | `Read, Grep, Glob, Bash` |
 | Reviews and also researches | Add `WebFetch, WebSearch` |
 | Advises without running anything | `Read, Grep, Glob, WebFetch, WebSearch` |
-| Writes code, or needs MCP tools | Leave `tools` out, so it inherits all of them |
+| Writes code, or needs MCP tools | Leave `tools` out, so it inherits all of them, and add `disallowedTools: Agent` |
+
+### Launching other agents
+
+Only the `dev` template can launch another agent. `scripts/validate.sh` enforces this: every other template must either list its tools without `Agent` or set `disallowedTools: Agent`.
+
+The reason is visibility. When an agent launches another, the owner sees only the first agent's summary of what the second one said. That is acceptable for a quick consult. It is not acceptable for a review that decides whether something ships.
+
+`templates/settings.json` also caps nesting at two layers with `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`. Two layers means a building agent and one advisor.
 
 ### Choosing a model
 
@@ -127,14 +137,50 @@ Valid values: `red`, `blue`, `green`, `yellow`, `purple`, `orange`, `pink`, `cya
 
 | File | Used for |
 |---|---|
-| `templates/CLAUDE.md` | The project's `CLAUDE.md`. Blocks marked `<!-- include if: <role> -->` are kept only when that role is installed. |
+| `templates/CLAUDE.md` | The project's `CLAUDE.md`. See "Optional sections" below. |
+| `templates/idea/BRIEF.md` | The idea brief that `/idea` writes |
+| `templates/plan/BLUEPRINT.md` | The build plan that `/blueprint` writes |
+| `templates/plan/DECISIONS.md` | The decision record |
 | `templates/settings.json` | Baseline permissions |
 | `templates/CURRENT-STATE.md` | Session handoff for projects without a tracker |
 | `templates/github/` | Pull request, issue, and CI templates |
 
+### Optional sections
+
+`templates/CLAUDE.md` wraps each optional section in a pair of markers:
+
+```markdown
+<!-- include if: tracker -->
+## Project tracking
+...
+<!-- /include -->
+```
+
+| Condition | The section is kept when |
+|---|---|
+| A role, such as `tracker` or `ux` | Any agent fills that role, adopted agents included |
+| `idea` | The project has no code yet, at the idea stage or the plan stage |
+| `build` | The project has code |
+| `blueprint` | `docs/plan/BLUEPRINT.md` exists, at any stage |
+
+Include blocks can't be nested. `/foundry-init` removes the markers from the generated file.
+
+### Stages
+
+A project has three stages. The repo decides the stage, and the manifest records it.
+
+| | idea | plan | build |
+|---|---|---|---|
+| The repo has | A brief | An approved blueprint, no code | Code |
+| Agents recommended | pm, architect, ux | pm, architect, ux | The core five |
+| Agents ground in | The brief | The brief and the blueprint | The code and the blueprint |
+| Code facts in project blocks | "Nothing is built yet" | Planned, labelled as not yet built | Real paths and commands |
+| GitHub templates and CI | Not added | Not added | Added |
+| `/ship` | Stops | Stops | Runs the gates |
+
 ### The permissions baseline
 
-`templates/settings.json` sets three lists:
+`templates/settings.json` sets one environment variable, which caps agent nesting at two layers, and three permission lists:
 
 | List | Contents | Effect |
 |---|---|---|
