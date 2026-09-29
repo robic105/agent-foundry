@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+
+# Claude Code: personal settings, agent memory, and worktrees stay local
+.claude/settings.local.json
+.claude/agent-memory/
+.claude/worktrees/
+
+# Secrets never belong in this repo
+.env
+.env.*
+!.env.example
+
+# Your private denylist for scripts/validate.sh. Never published.
+.private-terms
