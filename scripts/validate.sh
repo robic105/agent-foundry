@@ -89,6 +89,20 @@ for f in agents/*.md; do
 
   grep -q '^## What to remember' "$f" || fail "$f: missing the 'What to remember' section"
 
+  # Nesting policy: only the dev agent may launch another agent.
+  tools="$(field "$fm" tools)"
+  disallowed="$(field "$fm" disallowedTools)"
+  can_spawn=1
+  if [ -n "$tools" ]; then
+    case ", $tools," in *", Agent,"*) ;; *) can_spawn=0 ;; esac
+  fi
+  case ", $disallowed," in *", Agent,"*) can_spawn=0 ;; esac
+  if [ "$role" = "dev" ]; then
+    [ "$can_spawn" -eq 1 ] || fail "$f: the dev agent must be able to consult an advisor, so it needs the Agent tool"
+  else
+    [ "$can_spawn" -eq 0 ] || fail "$f: only dev may launch agents. Add 'disallowedTools: Agent', or list tools without Agent."
+  fi
+
   [ "$errors" -eq "$before" ] && pass "$f"
 done
 
@@ -122,12 +136,18 @@ for f in templates/settings.json; do
     fail "$f is not valid JSON"
   fi
 done
-for f in templates/CLAUDE.md templates/CURRENT-STATE.md templates/github/pull_request_template.md templates/github/workflows/ci.yml; do
+for f in templates/CLAUDE.md templates/CURRENT-STATE.md templates/idea/BRIEF.md templates/plan/BLUEPRINT.md templates/plan/DECISIONS.md templates/github/pull_request_template.md templates/github/workflows/ci.yml; do
   [ -f "$f" ] && pass "$f exists" || fail "$f is missing"
 done
 inc_open="$(grep -c '<!-- include if:' templates/CLAUDE.md || true)"
 inc_close="$(grep -c '<!-- /include -->' templates/CLAUDE.md || true)"
 [ "$inc_open" = "$inc_close" ] || fail "templates/CLAUDE.md: unbalanced include markers ($inc_open opened, $inc_close closed)"
+badcond="$(sed -n 's/^<!-- include if: \(.*\) -->$/\1/p' templates/CLAUDE.md | grep -vxE 'idea|build|blueprint|dev|code-review|security|ux|pm|architect|qa|devops|tracker|social' || true)"
+[ -z "$badcond" ] || fail "templates/CLAUDE.md: unknown include condition: $badcond"
+nested="$(awk '/<!-- include if:/{ if (open) bad=1; open=1 } /<!-- \/include -->/{ open=0 } END{ if (bad) print "yes" }' templates/CLAUDE.md)"
+[ -z "$nested" ] || fail "templates/CLAUDE.md: include blocks must not be nested"
+depth="$(python3 -c 'import json; print(json.load(open("templates/settings.json")).get("env",{}).get("CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH",""))' 2>/dev/null)"
+[ "$depth" = "2" ] || fail "templates/settings.json: CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH should be \"2\" (main session, a building agent, one advisor) but is '$depth'"
 
 echo
 echo "Scripts"

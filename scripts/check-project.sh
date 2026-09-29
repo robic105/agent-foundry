@@ -6,7 +6,9 @@
 #
 # Fails on: template tokens left unfilled, invalid agent frontmatter, an agent
 # name that does not match its filename, unbalanced foundry markers, invalid
-# JSON, and missing .gitignore entries.
+# JSON, a manifest that lists an agent with no file, a missing brief at the
+# idea stage, a missing or unapproved blueprint at the plan stage, and missing
+# .gitignore entries.
 
 set -uo pipefail
 
@@ -144,19 +146,75 @@ if [ -f "$PROJECT/CLAUDE.md" ]; then
   if grep -qE '<!-- (include if:|/include)' "$PROJECT/CLAUDE.md"; then
     fail "$PROJECT/CLAUDE.md still has template include markers"
   fi
+  if [ -f "$PROJECT/docs/plan/BLUEPRINT.md" ] && ! grep -q 'docs/plan/BLUEPRINT.md' "$PROJECT/CLAUDE.md"; then
+    fail "$PROJECT/CLAUDE.md does not mention docs/plan/BLUEPRINT.md, so agents will not know to build to it"
+  fi
   [ "$errors" -eq "$before" ] && pass "$PROJECT/CLAUDE.md"
 else
   fail "$PROJECT/CLAUDE.md is missing"
 fi
 
 # Other generated files
-for f in docs/CURRENT-STATE.md .github/pull_request_template.md .github/workflows/ci.yml; do
+for f in docs/CURRENT-STATE.md docs/idea/BRIEF.md docs/plan/BLUEPRINT.md docs/plan/DECISIONS.md .github/pull_request_template.md .github/workflows/ci.yml; do
   if [ -f "$PROJECT/$f" ]; then
     before="$errors"
     check_tokens "$PROJECT/$f"
     [ "$errors" -eq "$before" ] && pass "$PROJECT/$f"
   fi
 done
+for f in "$PROJECT"/docs/idea/rounds/*.md; do
+  [ -e "$f" ] || continue
+  before="$errors"
+  check_tokens "$f"
+  [ "$errors" -eq "$before" ] && pass "$f"
+done
+
+# Stage
+stage=""
+if [ -f "$PROJECT/.claude/foundry.json" ] && command -v python3 >/dev/null 2>&1; then
+  stage="$(python3 -c 'import json,sys
+try:
+    print(json.load(open(sys.argv[1])).get("stage",""))
+except Exception:
+    pass' "$PROJECT/.claude/foundry.json" 2>/dev/null)"
+fi
+case "$stage" in
+  idea)
+    if [ -f "$PROJECT/docs/idea/BRIEF.md" ]; then
+      pass "stage is idea and the brief exists"
+    else
+      fail "stage is idea but docs/idea/BRIEF.md is missing"
+    fi
+    ;;
+  plan)
+    if [ ! -f "$PROJECT/docs/plan/BLUEPRINT.md" ]; then
+      fail "stage is plan but docs/plan/BLUEPRINT.md is missing"
+    elif grep -qiE '^- \*\*Status:\*\* approved' "$PROJECT/docs/plan/BLUEPRINT.md"; then
+      pass "stage is plan and the blueprint is approved"
+    else
+      fail "stage is plan but the blueprint is not approved. Its Status line must start with 'approved'."
+    fi
+    ;;
+  build) pass "stage is build" ;;
+  "")    warn ".claude/foundry.json does not record a stage" ;;
+  *)     fail ".claude/foundry.json has an unknown stage: '$stage'" ;;
+esac
+
+# Every agent in the manifest must exist, or its memory and routing point nowhere
+if [ -f "$PROJECT/.claude/foundry.json" ] && command -v python3 >/dev/null 2>&1; then
+  missing="$(python3 -c 'import json,sys,os
+try:
+    d=json.load(open(sys.argv[1]))
+except Exception:
+    sys.exit(0)
+names=list((d.get("agents") or {}).keys())+list(d.get("adopted") or [])
+for n in sorted(set(names)):
+    if not os.path.isfile(os.path.join(sys.argv[2],".claude","agents",n+".md")):
+        print(n)' "$PROJECT/.claude/foundry.json" "$PROJECT" 2>/dev/null)"
+  if [ -n "$missing" ]; then
+    fail "the manifest lists agents that have no file: $(printf '%s' "$missing" | tr '\n' ' ')"
+  fi
+fi
 
 # JSON
 for f in .claude/settings.json .claude/foundry.json; do

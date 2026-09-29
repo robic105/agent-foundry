@@ -21,7 +21,10 @@ Notes from the user: `$ARGUMENTS`
 
 2. **Record it.** Read `.claude/foundry.json` to see how this project tracks state.
    - **With a tracker agent:** launch it with the summary. It updates statuses, captures each follow-up as a task, and reports a changelog. Remind it that built-but-unreachable work is Review, not Done.
+   - **At the idea stage:** update `docs/idea/BRIEF.md`. A decision the owner made goes under Decided with the date and the reason. A new question goes under Open questions. Set "Last updated". An agent's recommendation is not a decision.
    - **Without one:** update `docs/CURRENT-STATE.md`. Overwrite the status sections with the current truth and keep the file short.
+
+   If `docs/plan/BLUEPRINT.md` exists, also bring it up to date: the status of the current milestone, and any departure from the plan that came up and has no decision entry yet. List those departures for the owner. Do not record one as accepted yourself.
 
 3. **Check for loose ends.**
 
